@@ -1,0 +1,5 @@
+.env
+.git
+storage
+tests
+*.sql.gz

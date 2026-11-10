@@ -1,0 +1,5 @@
+.env
+storage/
+backups/
+tests/http.log
+tests/sessions/

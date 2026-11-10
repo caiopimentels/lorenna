@@ -1,0 +1,128 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    environment: &app-env
+      DB_HOST: db
+      DB_USER: lorenna
+      DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD}
+      APP_URL: ${APP_URL:?Configure APP_URL}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:?Configure EVOLUTION_API_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Configure ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Configure ADMIN_PASSWORD}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_TRANSCRIPTION_MODEL: ${OPENAI_TRANSCRIPTION_MODEL:-gpt-transcribe}
+      TZ: America/Bahia
+    volumes:
+      - app_storage:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/login.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  midias:
+    build: .
+    restart: unless-stopped
+    command: ["sh", "scripts/entrypoint.sh", "midias"]
+    environment: *app-env
+    volumes:
+      - app_storage:/var/www/html/storage
+    depends_on:
+      app:
+        condition: service_healthy
+  monitor:
+    build: .
+    restart: unless-stopped
+    command: ["sh", "scripts/entrypoint.sh", "monitor"]
+    environment: *app-env
+    volumes:
+      - app_storage:/var/www/html/storage
+    depends_on:
+      app:
+        condition: service_healthy
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: lorenna
+      MARIADB_USER: lorenna
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Configure MYSQL_ROOT_PASSWORD}
+      TZ: America/Bahia
+    volumes:
+      - app_db:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+  evolution:
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: unless-stopped
+    environment:
+      SERVER_URL: http://evolution:8080
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "false"
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}@postgres:5432/evolution
+      DATABASE_CONNECTION_CLIENT_NAME: lorenna
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      DATABASE_SAVE_DATA_HISTORIC: "true"
+      DATABASE_DELETE_MESSAGE: "false"
+      DEL_INSTANCE: "false"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/0
+      CACHE_REDIS_PREFIX_KEY: lorenna
+      CACHE_REDIS_SAVE_INSTANCES: "false"
+      CONFIG_SESSION_PHONE_CLIENT: Lorenna
+      CONFIG_SESSION_PHONE_NAME: Chrome
+      TZ: America/Bahia
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: evolution
+    volumes:
+      - evolution_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution -d evolution"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+volumes:
+  app_storage:
+  app_db:
+  evolution_instances:
+  evolution_db:
+  redis_data:
