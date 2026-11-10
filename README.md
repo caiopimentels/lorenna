@@ -55,7 +55,7 @@ As mensagens recebidas e enviadas pelo módulo ficam no MariaDB (`app_db`),
 independentemente da sessão Evolution. Desconectar, reconectar ou reiniciar
 os containers não apaga as conversas. O painel mostra as últimas 300 mensagens
 e permite abrir mensagens anteriores. Imagens e áudios são arquivados no volume
-`app_storage`; os áudios são transcritos pela OpenAI quando a chave está configurada.
+`app_storage`; os áudios são transcritos pela Groq quando a chave está configurada.
 
 O histórico começa com as mensagens recebidas pelos webhooks após conectar;
 não há importação automática de conversas antigas do celular ou do UniPHD.
@@ -118,11 +118,11 @@ Se já iniciou a versão anterior, atualize os arquivos e execute `docker compos
 
 ## Midias permanentes e transcricao
 
-Configure `OPENAI_API_KEY` no `.env` do servidor e execute `docker compose up -d --build`.
+Configure `GROQ_API_KEY` no `.env` do servidor e execute `docker compose up -d --build`.
 O servico `midias` baixa imagens e audios recebidos/enviados pela conta conectada e transcreve
-os audios com `OPENAI_TRANSCRIPTION_MODEL` (padrao `gpt-transcribe`). A chave fica no servidor.
-O audio e enviado a OpenAI apenas para transcricao, conforme a documentacao oficial:
-https://developers.openai.com/api/docs/guides/speech-to-text
+os audios com `GROQ_TRANSCRIPTION_MODEL` (padrao `whisper-large-v3-turbo`). A chave fica no servidor.
+O audio e enviado a Groq apenas para transcricao, conforme a documentacao oficial:
+https://console.groq.com/docs/speech-to-text
 
 A migracao aditiva roda na inicializacao do app, inclusive em bancos existentes. Fora do Docker,
 execute `php scripts/migrar_midias.php` e mantenha `php scripts/midias.php` ativo com as mesmas

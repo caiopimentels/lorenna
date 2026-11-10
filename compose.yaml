@@ -12,8 +12,8 @@ services:
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:?Configure EVOLUTION_API_KEY}
       ADMIN_EMAIL: ${ADMIN_EMAIL:?Configure ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Configure ADMIN_PASSWORD}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_TRANSCRIPTION_MODEL: ${OPENAI_TRANSCRIPTION_MODEL:-gpt-transcribe}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_TRANSCRIPTION_MODEL: ${GROQ_TRANSCRIPTION_MODEL:-whisper-large-v3-turbo}
       TZ: America/Bahia
     volumes:
       - app_storage:/var/www/html/storage

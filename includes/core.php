@@ -9,7 +9,11 @@ require_once __DIR__ . '/whatsapp_midias.php';
 require_once __DIR__ . '/monitor.php';
 function getDB(): PDO {
     static $db;
-    return $db ??= new PDO('mysql:host=' . (getenv('DB_HOST') ?: 'db') . ';port=' . (getenv('DB_PORT') ?: '3306') . ';dbname=' . (getenv('DB_NAME') ?: 'lorenna') . ';charset=utf8mb4', getenv('DB_USER') ?: 'lorenna', getenv('DB_PASSWORD'), [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES=>false]);
+    if ($db) return $db;
+    $conexao = new PDO('mysql:host=' . (getenv('DB_HOST') ?: 'db') . ';port=' . (getenv('DB_PORT') ?: '3306') . ';dbname=' . (getenv('DB_NAME') ?: 'lorenna') . ';charset=utf8mb4', getenv('DB_USER') ?: 'lorenna', getenv('DB_PASSWORD'), [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES=>false]);
+    // Mesmo fuso do PHP, independente do fuso do servidor ou de volumes existentes.
+    $conexao->exec("SET time_zone = '-03:00'");
+    return $db = $conexao;
 }
 function urlAbsoluta(string $path): string { return rtrim(getenv('APP_URL') ?: 'http://localhost:8080', '/') . $path; }
 function usuarioLogado(): bool { return !empty($_SESSION['usuario']); }

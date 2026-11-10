@@ -82,7 +82,7 @@ try:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(8000); w.writeframes(b'\x00\x00'*800)
     audio = {'key':{'remoteJid':'5577999990000@s.whatsapp.net','id':'http-audio'},'message':{'audioMessage':{},'base64':base64.b64encode(wav.getvalue()).decode()}}
     webhook('MESSAGES_UPSERT', audio)
-    subprocess.run(php+['scripts/midias.php','--once'], cwd=root, env=dict(env, OPENAI_API_KEY=''), check=True)
+    subprocess.run(php+['scripts/midias.php','--once'], cwd=root, env=dict(env, GROQ_API_KEY=''), check=True)
     webhook('MESSAGES_DELETE', image['key'])
     status, html = req('/whatsapp/conversas.php?id=1')
     assert 'Imagem HTTP' in html and 'Transcrição aguardando configuração pelo administrador.' in html

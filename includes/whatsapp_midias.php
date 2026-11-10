@@ -42,7 +42,7 @@ function salvarMidiaWhatsapp(string $bytes): array
 
 function transcreverAudioWhatsapp(string $path, string $mime): string
 {
-    $chave = getenv('OPENAI_API_KEY');
+    $chave = getenv('GROQ_API_KEY');
     if (!$chave) throw new RuntimeException('Transcrição aguardando configuração pelo administrador.');
     $temporario = null;
     if (in_array($mime, ['audio/ogg', 'application/ogg'], true)) {
@@ -57,11 +57,11 @@ function transcreverAudioWhatsapp(string $path, string $mime): string
     }
     try {
         if (filesize($path) > 24 * 1024 * 1024) throw new RuntimeException('áudio preservado; transcrição limitada a 24 MB por arquivo.');
-        $curl = curl_init('https://api.openai.com/v1/audio/transcriptions');
+        $curl = curl_init('https://api.groq.com/openai/v1/audio/transcriptions');
         curl_setopt_array($curl, [CURLOPT_POST=>true, CURLOPT_RETURNTRANSFER=>true,
             CURLOPT_TIMEOUT=>180, CURLOPT_CONNECTTIMEOUT=>10,
             CURLOPT_HTTPHEADER=>['Authorization: Bearer ' . $chave],
-            CURLOPT_POSTFIELDS=>['model'=>getenv('OPENAI_TRANSCRIPTION_MODEL') ?: 'gpt-transcribe',
+            CURLOPT_POSTFIELDS=>['model'=>getenv('GROQ_TRANSCRIPTION_MODEL') ?: 'whisper-large-v3-turbo',
                 'file'=>new CURLFile($path, $mime, ($mime === 'audio/mpeg' ? 'audio.mp3' : basename($path))), 'response_format'=>'json']]);
         $resposta = curl_exec($curl);
         $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);

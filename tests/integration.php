@@ -11,6 +11,10 @@ $pdo->exec(file_get_contents(__DIR__ . '/../sql/schema.sql'));
 require __DIR__ . '/../scripts/iniciar.php';
 $pdo = getDB();
 function check(bool $ok, string $label): void { if (!$ok) throw new RuntimeException($label); echo "OK $label\n"; }
+check(date_default_timezone_get() === 'America/Bahia', 'PHP no fuso da Bahia');
+check($pdo->query('SELECT @@session.time_zone')->fetchColumn() === '-03:00', 'banco no mesmo fuso do PHP');
+$agoraBanco = $pdo->query('SELECT NOW()')->fetchColumn();
+check(abs(strtotime($agoraBanco) - time()) <= 5, 'horarios do PHP e banco sincronizados');
 check(!function_exists('enviarTextoWhatsapp') && !function_exists('chamarIaChat') && function_exists('transcreverAudioWhatsapp'), 'sem envio de mensagens; transcricao disponivel');
 check((int) $pdo->query('SELECT COUNT(*) FROM usuarios')->fetchColumn() === 1, 'administrador inicial');
 $user = $pdo->query('SELECT * FROM usuarios')->fetch();
